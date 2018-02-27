@@ -1,0 +1,17 @@
+package by.wgdetective.candidaterepotester.model;
+
+import lombok.Data;
+
+import java.util.List;
+
+/**
+ * @author Wladimir Litvinov
+ */
+@Data
+public class TestSuite {
+    private String testName;
+
+    private String args;
+    private List<String> params;
+    private List<String> expected;
+}
