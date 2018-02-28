@@ -79,7 +79,11 @@ public abstract class AbstractExecutor {
         try {
             processExitValue = process.exitValue();
         } catch (final IllegalThreadStateException e) {
-            processExitValue = 0;
+            if (preResult.size() > 0) {
+                processExitValue = 0;
+            } else {
+                processExitValue = -1;
+            }
         }
         final List<String> result = filterResult(preResult, listOfIgnoringStringsInOutput);
         final boolean checkResult = processExitValue == 0 && check(test, result);

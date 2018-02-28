@@ -74,6 +74,7 @@ public class CandidateRepoTestCommand {
         if (projectDirectory.getPath().isEmpty()) {
             throw new NullPointerException("Empty projectDirectory");
         }
+        //TODO refactor
         final List<String> listOfIgnoringStringsInOutput = new ArrayList<>();
         for (String s : _listOfIgnoringStringsInOutput) {
             listOfIgnoringStringsInOutput.add(s.replace("#space", " ").replace("#empty", ""));
