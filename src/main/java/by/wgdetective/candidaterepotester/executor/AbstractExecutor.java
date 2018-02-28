@@ -75,17 +75,18 @@ public abstract class AbstractExecutor {
         Thread.sleep(INTERVAL);
         final List<String> preResult = new ArrayList(thread.getLines());
 
+        final List<String> result = filterResult(preResult, listOfIgnoringStringsInOutput);
         int processExitValue;
         try {
             processExitValue = process.exitValue();
         } catch (final IllegalThreadStateException e) {
-            if (preResult.size() > 0) {
+            System.out.println(e.getMessage());
+            if (result.size() > 0) {
                 processExitValue = 0;
             } else {
                 processExitValue = -1;
             }
         }
-        final List<String> result = filterResult(preResult, listOfIgnoringStringsInOutput);
         final boolean checkResult = processExitValue == 0 && check(test, result);
         System.out.println("\n" + test.getTestName() + " " + checkResult);
         if (!checkResult) {
