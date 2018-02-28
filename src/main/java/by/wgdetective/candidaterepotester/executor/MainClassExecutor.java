@@ -12,6 +12,10 @@ public class MainClassExecutor extends AbstractExecutor {
 
     @Override
     protected void compile(final File mainClassFile) throws IOException, InterruptedException {
+        final File classFile = new File(mainClassFile.getPath().replace(".java", ".class"));
+        if (classFile.exists()) {
+            classFile.delete();
+        }
         final Process compilationProcess = Runtime.getRuntime().exec("javac " + mainClassFile.getPath());
         compilationProcess.waitFor();
     }

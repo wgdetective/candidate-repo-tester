@@ -36,6 +36,9 @@ public class CandidateRepoTestCommand {
     private final TestsPackageLoader testsPackageLoader = new TestsPackageLoader();
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
+    private String lastLoaded;
+    private String lastRunTestSuite;
+
     @ShellMethod("load")
     public String load(final String gitHubLink)
             throws IOException {
@@ -44,6 +47,9 @@ public class CandidateRepoTestCommand {
                 .replace("/", "_");
         final String fullDirName = SOURCES_CANDIDATES + dirName;
         gitHubLoader.load(gitHubLink, fullDirName);
+
+        lastLoaded = fullDirName;
+
         return fullDirName;
     }
 
@@ -63,14 +69,22 @@ public class CandidateRepoTestCommand {
                                             "--listOfIgnoringStringsInOutput"},
                               defaultValue = "") final List<String> _listOfIgnoringStringsInOutput,
                       @ShellOption(value = {"-t", "--testNumbers"}, defaultValue = "") final List<String> testNumbers,
-                      @ShellOption(value = {"-p", "--testsPackage"}, defaultValue = "") final File testsPackage,
+                      @ShellOption(value = {"-p", "--testsPackage"}, defaultValue = "") File testsPackage,
                       @ShellOption(value = {"-m", "--mainFileName"}, defaultValue = "") final String mainFileName,
                       @ShellOption(value = {"-ip", "--ignorePom"}, defaultValue = "false") final Boolean ignorePom,
                       @ShellOption(value = {"-e", "--exitCommand"}, defaultValue = "") final String exitCommand,
                       @ShellOption(value = {"-c", "--startClasspathPackage"},
                               defaultValue = "src") final String startClasspathPackage,
-                      final File projectDirectory)
+                      @ShellOption(value = {"-d", "--projectDirectory","--project-directory"}, defaultValue = "") File projectDirectory)
             throws IOException, InterruptedException {
+        if ((projectDirectory == null || projectDirectory.getPath().isEmpty()) && lastLoaded != null) {
+            System.out.println("lastLoaded = " + lastLoaded);
+            projectDirectory = new File(lastLoaded);
+        }
+        if ((testsPackage == null || testsPackage.getPath().isEmpty()) && lastRunTestSuite != null) {
+            System.out.println("lastRunTestSuite = " + lastRunTestSuite);
+            testsPackage = new File(lastRunTestSuite);
+        }
         if (projectDirectory.getPath().isEmpty()) {
             throw new NullPointerException("Empty projectDirectory");
         }
@@ -97,6 +111,7 @@ public class CandidateRepoTestCommand {
                   mainFileName,
                   ignorePom, exitCommand, startClasspathPackage);
         }
+        lastRunTestSuite = testsPackage.getPath();
         return "";
     }
 
