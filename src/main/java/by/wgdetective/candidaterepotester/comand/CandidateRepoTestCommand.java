@@ -18,6 +18,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -46,23 +47,36 @@ public class CandidateRepoTestCommand {
         return fullDirName;
     }
 
+    @ShellMethod("arr")
+    public void arr(@ShellOption(value = {"-t", "--testNumbers"}, defaultValue = "") final List<String> test) {
+        System.out.println(test);
+    }
+
     //run --project-directory /Users/wgdetective/sources/candidates/tajbe99_Task1 --tests-package /Users/wgdetective/sources/candidate-repo-tester/testSuites/task_1
     //run --project-directory /Users/wgdetective/sources/candidates/alyaromin_TextFilter --tests-package /Users/wgdetective/sources/candidate-repo-tester/testSuites/task_1 -a -i Вывод:
     //run --project-directory /Users/wgdetective/sources/candidates/IlyaBeetle_temp-repository/task-1-words -p /Users/wgdetective/sources/candidate-repo-tester/testSuites/task_1 -a
+    //run --project-directory /Users/wgdetective/sources/candidates/DmitrySamsonov_gpSolutionsTask2_ -p /Users/wgdetective/sources/candidate-repo-tester/testSuites/task_1 -m Text -a --ignorePom  -c java -i Output\ :#space,Enter\ strings\ :#space,#space,#empty
     //
     @ShellMethod("run")
     public String run(@ShellOption(value = {"-a", "--argsModeOn"}, defaultValue = "false") final Boolean argsModeOn,
                       @ShellOption(value = {"-i",
                                             "--listOfIgnoringStringsInOutput"},
-                              defaultValue = "") final List<String> listOfIgnoringStringsInOutput,
+                              defaultValue = "") final List<String> _listOfIgnoringStringsInOutput,
                       @ShellOption(value = {"-t", "--testNumbers"}, defaultValue = "") final List<String> testNumbers,
                       @ShellOption(value = {"-p", "--testsPackage"}, defaultValue = "") final File testsPackage,
                       @ShellOption(value = {"-m", "--mainFileName"}, defaultValue = "") final String mainFileName,
                       @ShellOption(value = {"-ip", "--ignorePom"}, defaultValue = "false") final Boolean ignorePom,
+                      @ShellOption(value = {"-e", "--exitCommand"}, defaultValue = "") final String exitCommand,
+                      @ShellOption(value = {"-c", "--startClasspathPackage"},
+                              defaultValue = "src") final String startClasspathPackage,
                       final File projectDirectory)
             throws IOException, InterruptedException {
         if (projectDirectory.getPath().isEmpty()) {
             throw new NullPointerException("Empty projectDirectory");
+        }
+        final List<String> listOfIgnoringStringsInOutput = new ArrayList<>();
+        for (String s : _listOfIgnoringStringsInOutput) {
+            listOfIgnoringStringsInOutput.add(s.replace("#space", " ").replace("#empty", ""));
         }
         if (testsPackage.getPath().isEmpty()) {
             final File confFile = new File(projectDirectory.getPath() + TESTS_RUN_CONF_FILE_NAME);
@@ -71,15 +85,17 @@ public class CandidateRepoTestCommand {
             }
             final TestsRunConf testsRunConf =
                     gson.fromJson(IOUtils.toString(new FileReader(confFile)), TestsRunConf.class);
+            //TODO refactor
             doRun(testsRunConf.getArgsModeOn(), testsRunConf.getListOfIgnoringStringsInOutput(),
                   testsRunConf.getTestNumbers(), new File(testsRunConf.getProjectDirectory()),
                   new File(testsRunConf.getTestsPackage()), testsRunConf.getMainFileName(),
-                  testsRunConf.getIgnorePom());
+                  testsRunConf.getIgnorePom(), testsRunConf.getExitCommand(),
+                  testsRunConf.getStartClasspathPackage());
         } else {
-            doRun(argsModeOn, listOfIgnoringStringsInOutput, testNumbers, projectDirectory, testsPackage, mainFileName,
-                  ignorePom);
+            doRun(argsModeOn, listOfIgnoringStringsInOutput, testNumbers, projectDirectory, testsPackage,
+                  mainFileName,
+                  ignorePom, exitCommand, startClasspathPackage);
         }
-        //TODO добавть тест чтобы под один патерн подходило несколько строк
         return "";
     }
 
@@ -89,7 +105,9 @@ public class CandidateRepoTestCommand {
                        final File projectDirectory,
                        final File testsPackage,
                        final String mainFileName,
-                       final boolean ignorePom)
+                       final boolean ignorePom,
+                       final String exitCommand,
+                       final String startClasspathPackage)
             throws IOException, InterruptedException {
         final File mainClassFile = findMainClass(projectDirectory, mainFileName);
         if (mainClassFile == null) {
@@ -103,17 +121,19 @@ public class CandidateRepoTestCommand {
         final boolean success;
         if (pomFile != null && !ignorePom) {
             success = mavenClassExecutor
-                    .execute(pomFile, tests, Boolean.valueOf(argsModeOn), listOfIgnoringStringsInOutput, resultsFile);
+                    .execute(pomFile, tests, Boolean.valueOf(argsModeOn), listOfIgnoringStringsInOutput, resultsFile,
+                             exitCommand, startClasspathPackage);
         } else {
             success = mainClassExecutor
                     .execute(mainClassFile, tests, Boolean.valueOf(argsModeOn), listOfIgnoringStringsInOutput,
-                             resultsFile);
+                             resultsFile, exitCommand, startClasspathPackage);
 
         }
 
         if (success) {
+            //TODO refactor
             saveConf(argsModeOn, listOfIgnoringStringsInOutput, testNumbers, projectDirectory, testsPackage,
-                     mainFileName, ignorePom);
+                     mainFileName, ignorePom, exitCommand, startClasspathPackage);
         }
     }
 
@@ -163,11 +183,13 @@ public class CandidateRepoTestCommand {
                           final File projectDirectory,
                           final File testsPackage,
                           final String mainFileName,
-                          final boolean ignorePom)
+                          final boolean ignorePom,
+                          final String exitCommand,
+                          final String startClasspathPackage)
             throws IOException {
         final TestsRunConf testsRunConf =
                 new TestsRunConf(argsModeOn, listOfIgnoringStringsInOutput, testNumbers, projectDirectory.getPath(),
-                                 testsPackage.getPath(), mainFileName, ignorePom);
+                                 testsPackage.getPath(), mainFileName, ignorePom, exitCommand, startClasspathPackage);
         try (final FileWriter fileWriter = new FileWriter(projectDirectory.getPath() + TESTS_RUN_CONF_FILE_NAME,
                                                           false)) {
             fileWriter.append(gson.toJson(testsRunConf));

@@ -20,14 +20,16 @@ public abstract class AbstractExecutor {
                            final List<TestSuite> tests,
                            final boolean argsModeOn,
                            final List<String> listOfIgnoringStringsInOutput,
-                           final File resultsFile)
+                           final File resultsFile,
+                           final String exitCommand,
+                           final String startClasspathPackage)
             throws IOException, InterruptedException {
         compile(file);
         try (final FileWriter fileWriter = new FileWriter(resultsFile, false)) {
             boolean success = false;
             for (TestSuite test : tests) {
-                final Process process = run(file, test, argsModeOn);
-                final boolean testResult = test(test, argsModeOn, process, listOfIgnoringStringsInOutput);
+                final Process process = run(file, test, argsModeOn, startClasspathPackage);
+                final boolean testResult = test(test, argsModeOn, process, listOfIgnoringStringsInOutput, exitCommand);
                 if (testResult && !success) {
                     success = true;
                 }
@@ -41,14 +43,15 @@ public abstract class AbstractExecutor {
 
     protected abstract Process run(final File mainClassFile,
                                    final TestSuite test,
-                                   final boolean argsModeOn)
+                                   final boolean argsModeOn, final String startClasspathPackage)
             throws IOException, InterruptedException;
 
 
     private boolean test(final TestSuite test,
                          final boolean argsModeOn,
                          final Process process,
-                         final List<String> listOfIgnoringStringsInOutput)
+                         final List<String> listOfIgnoringStringsInOutput,
+                         final String exitCommand)
             throws IOException, InterruptedException {
         final RunProgramThread thread = new RunProgramThread(process.getInputStream());
         thread.start();
@@ -67,35 +70,43 @@ public abstract class AbstractExecutor {
         thread.cleanArray();
         Thread.sleep(INTERVAL);
 
-        finishProgram(process);
+        finishProgram(process, exitCommand);
 
         Thread.sleep(INTERVAL);
-        final List<String> result = new ArrayList(thread.getLines());
+        final List<String> preResult = new ArrayList(thread.getLines());
 
-        final boolean checkResult = process.exitValue() == 0 && check(test, result, listOfIgnoringStringsInOutput);
+        int processExitValue;
+        try {
+            processExitValue = process.exitValue();
+        } catch (final IllegalThreadStateException e) {
+            processExitValue = 0;
+        }
+        final List<String> result = filterResult(preResult, listOfIgnoringStringsInOutput);
+        final boolean checkResult = processExitValue == 0 && check(test, result);
         System.out.println("\n" + test.getTestName() + " " + checkResult);
         if (!checkResult) {
             System.out.println("WRONG ANSWER");
-            System.out.println("process.exitValue() = " + process.exitValue());
+            System.out.println("process.exitValue() = " + processExitValue);
             System.out.println("Expected:");
             test.getExpected().forEach(System.out::println);
             System.out.println("But was:");
             result.forEach(System.out::println);
 
         }
-        process.destroy();
-
+        try {
+            process.destroy();
+        } catch (final Exception e) {
+            e.printStackTrace();
+        }
         return checkResult;
     }
 
-    private boolean check(final TestSuite test,
-                          final List<String> preResult,
-                          final List<String> listOfIgnoringStringsInOutput) {
+    private List<String> filterResult(final List<String> preResult, final List<String> listOfIgnoringStringsInOutput) {
         final List<String> result = new ArrayList<>();
         for (String s : preResult) {
             boolean contains = false;
             for (String s1 : listOfIgnoringStringsInOutput) {
-                if (s.contains(s1)) {
+                if (s.equals(s1)) {
                     contains = true;
                     break;
                 }
@@ -104,6 +115,11 @@ public abstract class AbstractExecutor {
                 result.add(s);
             }
         }
+        return result;
+    }
+
+    private boolean check(final TestSuite test,
+                          final List<String> result) {
 
         final List<String> expected = test.getExpected();
         if (expected.size() == result.size()) {
@@ -121,11 +137,13 @@ public abstract class AbstractExecutor {
         return false;
     }
 
-    private void finishProgram(final Process process) throws IOException {
-        IOUtils.write("\n", process.getOutputStream(), ENCODING);
-        try {
-            process.getOutputStream().flush();
-        } catch (final IOException e) {
+    private void finishProgram(final Process process, final String exitCommand) throws IOException {
+        if (exitCommand != null && !exitCommand.isEmpty()) {
+            IOUtils.write(exitCommand, process.getOutputStream(), ENCODING);
+            try {
+                process.getOutputStream().flush();
+            } catch (final IOException e) {
+            }
         }
         IOUtils.write("\n", process.getOutputStream(), ENCODING);
         try {

@@ -21,7 +21,8 @@ public class MavenClassExecutor extends AbstractExecutor {
     @Override
     protected Process run(final File pomFile,
                           final TestSuite test,
-                          final boolean argsModeOn)
+                          final boolean argsModeOn,
+                          final String startClasspathPackage)
             throws IOException, InterruptedException {
         final String jarPath = findJar(pomFile);
         final StringBuilder command =

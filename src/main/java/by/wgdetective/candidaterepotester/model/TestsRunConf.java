@@ -20,4 +20,6 @@ public class TestsRunConf {
     private String testsPackage;
     private String mainFileName;
     private Boolean ignorePom;
+    private String exitCommand;
+    private String startClasspathPackage;
 }

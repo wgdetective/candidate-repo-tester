@@ -19,10 +19,11 @@ public class MainClassExecutor extends AbstractExecutor {
     @Override
     protected Process run(final File mainClassFile,
                           final TestSuite test,
-                          final boolean argsModeOn)
+                          final boolean argsModeOn,
+                          final String startClasspathPackage)
             throws IOException, InterruptedException {
-        final String projectDirectory = getProjectDirectory(mainClassFile);
-        final String mainClassPath = getMainClassWithPackagePath(mainClassFile);
+        final String projectDirectory = getProjectDirectory(mainClassFile, startClasspathPackage);
+        final String mainClassPath = getMainClassWithPackagePath(mainClassFile, startClasspathPackage);
         final StringBuilder command =
                 new StringBuilder().append("java -cp ").append(projectDirectory).append(" ").append(mainClassPath);
         if (test.getArgs() != null && argsModeOn) {
@@ -31,13 +32,15 @@ public class MainClassExecutor extends AbstractExecutor {
         return Runtime.getRuntime().exec(command.toString());
     }
 
-    protected String getProjectDirectory(final File mainClassFile) {
-        return mainClassFile.getPath().substring(0, mainClassFile.getPath().indexOf("src/") + 4);
+    protected String getProjectDirectory(final File mainClassFile, final String startClasspathPackage) {
+        final String cp = startClasspathPackage + "/";
+        return mainClassFile.getPath().substring(0, mainClassFile.getPath().indexOf(cp) + cp.length());
     }
 
-    protected String getMainClassWithPackagePath(final File mainClassFile) {
+    protected String getMainClassWithPackagePath(final File mainClassFile, final String startClasspathPackage) {
+        final String cp = startClasspathPackage + "/";
         final String v1 = mainClassFile.getPath().replace(".java", "");
-        return v1.substring(v1.indexOf("src/") + 4);
+        return v1.substring(v1.indexOf(cp) + cp.length());
     }
 
 }
