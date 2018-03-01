@@ -149,11 +149,12 @@ public abstract class AbstractExecutor {
                 process.getOutputStream().flush();
             } catch (final IOException e) {
             }
-        }
-        IOUtils.write("\n", process.getOutputStream(), ENCODING);
-        try {
-            process.getOutputStream().flush();
-        } catch (final IOException e) {
+        } else {
+            IOUtils.write("\n", process.getOutputStream(), ENCODING);
+            try {
+                process.getOutputStream().flush();
+            } catch (final IOException e) {
+            }
         }
     }
 
