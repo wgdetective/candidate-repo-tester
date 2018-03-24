@@ -1,6 +1,6 @@
-package by.wgdetective.candidaterepotester.executor;
+package by.wgdetective.candidaterepotester.executor.console;
 
-import by.wgdetective.candidaterepotester.model.TestSuite;
+import by.wgdetective.candidaterepotester.model.ConsoleTestSuite;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,7 +8,7 @@ import java.io.IOException;
 /**
  * @author Wladimir Litvinov
  */
-public class MavenClassExecutor extends AbstractExecutor {
+public class MavenClassConsoleExecutor extends AbstractConsoleExecutor {
 
     @Override
     protected void compile(final File pomFile) throws IOException, InterruptedException {
@@ -20,7 +20,7 @@ public class MavenClassExecutor extends AbstractExecutor {
 
     @Override
     protected Process run(final File pomFile,
-                          final TestSuite test,
+                          final ConsoleTestSuite test,
                           final boolean argsModeOn,
                           final String startClasspathPackage)
             throws IOException, InterruptedException {

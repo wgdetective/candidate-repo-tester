@@ -1,6 +1,6 @@
-package by.wgdetective.candidaterepotester.executor;
+package by.wgdetective.candidaterepotester.executor.console;
 
-import by.wgdetective.candidaterepotester.model.TestSuite;
+import by.wgdetective.candidaterepotester.model.ConsoleTestSuite;
 
 import java.io.File;
 import java.io.IOException;
@@ -8,7 +8,7 @@ import java.io.IOException;
 /**
  * @author Wladimir Litvinov
  */
-public class MainClassExecutor extends AbstractExecutor {
+public class MainClassConsoleExecutor extends AbstractConsoleExecutor {
 
     @Override
     protected void compile(final File mainClassFile) throws IOException, InterruptedException {
@@ -22,7 +22,7 @@ public class MainClassExecutor extends AbstractExecutor {
 
     @Override
     protected Process run(final File mainClassFile,
-                          final TestSuite test,
+                          final ConsoleTestSuite test,
                           final boolean argsModeOn,
                           final String startClasspathPackage)
             throws IOException, InterruptedException {
@@ -35,6 +35,8 @@ public class MainClassExecutor extends AbstractExecutor {
         }
         return Runtime.getRuntime().exec(command.toString());
     }
+
+    //run --projectDirectory /Users/wgdetective/sources/candidates/round_3/gr_1/Войтель/ --mainFileName 1 --testsPackage /Users/wgdetective/sources/candidate-repo-tester/testSuites/mart/task_1/ --startClasspathPackage Войтель
 
     protected String getProjectDirectory(final File mainClassFile, final String startClasspathPackage) {
         final String cp = startClasspathPackage + "/";

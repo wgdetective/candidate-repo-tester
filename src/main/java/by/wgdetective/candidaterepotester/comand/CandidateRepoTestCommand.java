@@ -1,11 +1,12 @@
 package by.wgdetective.candidaterepotester.comand;
 
-import by.wgdetective.candidaterepotester.executor.MainClassExecutor;
-import by.wgdetective.candidaterepotester.executor.MavenClassExecutor;
+import by.wgdetective.candidaterepotester.executor.console.MainClassConsoleExecutor;
+import by.wgdetective.candidaterepotester.executor.console.MavenClassConsoleExecutor;
 import by.wgdetective.candidaterepotester.loader.GitHubLoader;
 import by.wgdetective.candidaterepotester.loader.TestsPackageLoader;
-import by.wgdetective.candidaterepotester.model.TestSuite;
+import by.wgdetective.candidaterepotester.model.ConsoleTestSuite;
 import by.wgdetective.candidaterepotester.model.TestsRunConf;
+import by.wgdetective.candidaterepotester.util.FindMainClassUtil;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.commons.io.IOUtils;
@@ -31,15 +32,15 @@ public class CandidateRepoTestCommand {
     public static final String TESTS_RUN_RESULT_FILE_NAME = "/testsRunResult.txt";
 
     private final GitHubLoader gitHubLoader = new GitHubLoader();
-    private final MainClassExecutor mainClassExecutor = new MainClassExecutor();
-    private final MavenClassExecutor mavenClassExecutor = new MavenClassExecutor();
+    private final MainClassConsoleExecutor mainClassExecutor = new MainClassConsoleExecutor();
+    private final MavenClassConsoleExecutor mavenClassExecutor = new MavenClassConsoleExecutor();
     private final TestsPackageLoader testsPackageLoader = new TestsPackageLoader();
     private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     private String lastLoaded;
     private String lastRunTestSuite;
 
-    @ShellMethod("load")
+    @ShellMethod("loadConsole")
     public String load(final String gitHubLink)
             throws IOException {
         final String dirName = gitHubLink.replace("https://github.com/", "")
@@ -51,11 +52,6 @@ public class CandidateRepoTestCommand {
         lastLoaded = fullDirName;
 
         return fullDirName;
-    }
-
-    @ShellMethod("arr")
-    public void arr(@ShellOption(value = {"-t", "--testNumbers"}, defaultValue = "") final List<String> test) {
-        System.out.println(test);
     }
 
     //run --project-directory /Users/wgdetective/sources/candidates/tajbe99_Task1 --tests-package /Users/wgdetective/sources/candidate-repo-tester/testSuites/task_1
@@ -75,7 +71,7 @@ public class CandidateRepoTestCommand {
                       @ShellOption(value = {"-e", "--exitCommand"}, defaultValue = "") final String exitCommand,
                       @ShellOption(value = {"-c", "--startClasspathPackage"},
                               defaultValue = "src") final String startClasspathPackage,
-                      @ShellOption(value = {"-d", "--projectDirectory","--project-directory"}, defaultValue = "") File projectDirectory)
+                      @ShellOption(value = {"-d", "--projectDirectory"}, defaultValue = "") File projectDirectory)
             throws IOException, InterruptedException {
         if ((projectDirectory == null || projectDirectory.getPath().isEmpty()) && lastLoaded != null) {
             System.out.println("lastLoaded = " + lastLoaded);
@@ -125,13 +121,13 @@ public class CandidateRepoTestCommand {
                        final String exitCommand,
                        final String startClasspathPackage)
             throws IOException, InterruptedException {
-        final File mainClassFile = findMainClass(projectDirectory, mainFileName);
+        final File mainClassFile = FindMainClassUtil.findMainClass(projectDirectory, mainFileName);
         if (mainClassFile == null) {
             throw new NullPointerException("Main class is not found");
         }
         final File pomFile = findPomFile(projectDirectory);
 
-        final List<TestSuite> tests = testsPackageLoader.load(testsPackage, testNumbers);
+        final List<ConsoleTestSuite> tests = testsPackageLoader.loadConsole(testsPackage, testNumbers);
         final File resultsFile = new File(projectDirectory + TESTS_RUN_RESULT_FILE_NAME);
 
         final boolean success;
@@ -167,30 +163,6 @@ public class CandidateRepoTestCommand {
             }
         }
         return null;
-    }
-
-    private File findMainClass(final File projectDirectory, final String mainFileName) throws IOException {
-        for (final File file : projectDirectory.listFiles()) {
-            final boolean checkMainFile =
-                    mainFileName == null || mainFileName.isEmpty() || file.getName().contains(mainFileName);
-            if (file.getName().endsWith(".java")
-                && checkMainFile) {
-                if (containsMainMethod(file)) {
-                    return file;
-                }
-            }
-            if (file.isDirectory()) {
-                final File res = findMainClass(file, mainFileName);
-                if (res != null) {
-                    return res;
-                }
-            }
-        }
-        return null;
-    }
-
-    private boolean containsMainMethod(final File file) throws IOException {
-        return IOUtils.toString(new FileReader(file)).contains("public static void main");
     }
 
     private void saveConf(final Boolean argsModeOn,

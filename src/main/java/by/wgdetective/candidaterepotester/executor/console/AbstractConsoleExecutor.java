@@ -1,6 +1,6 @@
-package by.wgdetective.candidaterepotester.executor;
+package by.wgdetective.candidaterepotester.executor.console;
 
-import by.wgdetective.candidaterepotester.model.TestSuite;
+import by.wgdetective.candidaterepotester.model.ConsoleTestSuite;
 import org.apache.commons.io.IOUtils;
 
 import java.io.File;
@@ -12,12 +12,12 @@ import java.util.List;
 /**
  * @author Wladimir Litvinov
  */
-public abstract class AbstractExecutor {
+public abstract class AbstractConsoleExecutor {
     public static final String ENCODING = "UTF-8";
     public static final long INTERVAL = 500l;
 
     public boolean execute(final File file,
-                           final List<TestSuite> tests,
+                           final List<ConsoleTestSuite> tests,
                            final boolean argsModeOn,
                            final List<String> listOfIgnoringStringsInOutput,
                            final File resultsFile,
@@ -27,7 +27,7 @@ public abstract class AbstractExecutor {
         compile(file);
         try (final FileWriter fileWriter = new FileWriter(resultsFile, false)) {
             boolean success = false;
-            for (TestSuite test : tests) {
+            for (ConsoleTestSuite test : tests) {
                 final Process process = run(file, test, argsModeOn, startClasspathPackage);
                 final boolean testResult = test(test, argsModeOn, process, listOfIgnoringStringsInOutput, exitCommand);
                 if (testResult && !success) {
@@ -42,12 +42,12 @@ public abstract class AbstractExecutor {
     protected abstract void compile(final File mainClassFile) throws IOException, InterruptedException;
 
     protected abstract Process run(final File mainClassFile,
-                                   final TestSuite test,
+                                   final ConsoleTestSuite test,
                                    final boolean argsModeOn, final String startClasspathPackage)
             throws IOException, InterruptedException;
 
 
-    private boolean test(final TestSuite test,
+    private boolean test(final ConsoleTestSuite test,
                          final boolean argsModeOn,
                          final Process process,
                          final List<String> listOfIgnoringStringsInOutput,
@@ -123,7 +123,7 @@ public abstract class AbstractExecutor {
         return result;
     }
 
-    private boolean check(final TestSuite test,
+    private boolean check(final ConsoleTestSuite test,
                           final List<String> result) {
 
         final List<String> expected = test.getExpected();

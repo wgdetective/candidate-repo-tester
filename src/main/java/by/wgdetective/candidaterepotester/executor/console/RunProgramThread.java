@@ -1,4 +1,4 @@
-package by.wgdetective.candidaterepotester.executor;
+package by.wgdetective.candidaterepotester.executor.console;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
@@ -23,7 +23,7 @@ public class RunProgramThread extends Thread {
     @Override
     public void run() {
         try {
-            final LineIterator lineIterator = IOUtils.lineIterator(inputStream, AbstractExecutor.ENCODING);
+            final LineIterator lineIterator = IOUtils.lineIterator(inputStream, AbstractConsoleExecutor.ENCODING);
             while (lineIterator.hasNext()) {
                 addLineToArray(lineIterator.nextLine());
             }

@@ -1,6 +1,7 @@
 package by.wgdetective.candidaterepotester.loader;
 
-import by.wgdetective.candidaterepotester.model.TestSuite;
+import by.wgdetective.candidaterepotester.model.ConsoleTestSuite;
+import by.wgdetective.candidaterepotester.model.FileTestSuite;
 import org.apache.commons.io.IOUtils;
 
 import java.io.File;
@@ -17,11 +18,11 @@ import java.util.Scanner;
  */
 public class TestsPackageLoader {
 
-    public List<TestSuite> load(final File testsPackage, final List<String> testNumbers) throws IOException {
-        final List<TestSuite> result = new ArrayList<>();
+    public List<ConsoleTestSuite> loadConsole(final File testsPackage, final List<String> testNumbers) throws IOException {
+        final List<ConsoleTestSuite> result = new ArrayList<>();
         if (testsPackage != null) {
             for (final File file : testsPackage.listFiles((f) -> f.getPath().endsWith(".in"))) {
-                final TestSuite testSuite = new TestSuite();
+                final ConsoleTestSuite testSuite = new ConsoleTestSuite();
                 testSuite.setTestName(file.getName());
                 try (final Scanner scanner = new Scanner(file)) {
                     final String args = scanner.nextLine();
@@ -43,7 +44,27 @@ public class TestsPackageLoader {
                 result.add(testSuite);
             }
         }
-        result.sort(Comparator.comparing(TestSuite::getTestName));
+        result.sort(Comparator.comparing(ConsoleTestSuite::getTestName));
+        return result;
+    }
+
+    public List<FileTestSuite> loadFile(final File testsPackage, final List<String> testNumbers) throws IOException {
+        final List<FileTestSuite> result = new ArrayList<>();
+        if (testsPackage != null) {
+            for (final File file : testsPackage.listFiles((f) -> f.getPath().endsWith(".in"))) {
+                final FileTestSuite testSuite = new FileTestSuite();
+                testSuite.setName(file.getName());
+                testSuite.setInputFile(file);
+                final File outFile = new File(file.getPath().replace("in", "out"));
+                if (outFile.exists()) {
+                    testSuite.setOutputFile(outFile);
+                    result.add(testSuite);
+                } else {
+                    throw new NullPointerException("No test out file found " + outFile.getPath());
+                }
+            }
+        }
+        result.sort(Comparator.comparing(FileTestSuite::getName));
         return result;
     }
 }

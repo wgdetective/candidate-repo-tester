@@ -8,7 +8,7 @@ import java.util.List;
  * @author Wladimir Litvinov
  */
 @Data
-public class TestSuite {
+public class ConsoleTestSuite {
     private String testName;
 
     private String args;
